@@ -18,23 +18,14 @@
     "test:e2e:ui": "playwright test --ui"
   },
   "dependencies": {
-    "@biconomy/account": "^4.4.6",
-    "@biconomy/use-aa": "^1.0.14",
-    "@ethersproject/address": "5.7.0",
-    "@privy-io/react-auth": "^1.68.0",
-    "@privy-io/wagmi": "^0.2.10",
     "@tailwindcss/forms": "^0.5.7",
-    "@tanstack/react-query": "^5",
-    "@wagmi/chains": "^1.8.0",
     "eslint": "8.31.0",
     "eslint-config-next": "13.1.1",
-    "ethers": "5.7.2",
     "next": "^14.1.0",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
-    "typescript": "~5.1.6",
-    "viem": "^2.7.9",
-    "wagmi": "^2.5.18"
+    "thirdweb": "^5.29.6",
+    "typescript": "~5.1.6"
   },
   "devDependencies": {
     "@ianvs/prettier-plugin-sort-imports": "^3.7.1",
