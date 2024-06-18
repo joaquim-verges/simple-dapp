@@ -1,14 +1,14 @@
 'use client';
 
-import { useSmartAccount } from '@biconomy/use-aa';
-import { baseSepolia } from 'viem/chains';
-import {useBalance} from 'wagmi';
+import {useWalletBalance, useActiveAccount} from 'thirdweb/react';
+import { chain, client } from './providers';
 
 const Balance = () => {
-  const {smartAccountAddress} = useSmartAccount();
-  const {data, isError, isLoading} = useBalance({
-    address: smartAccountAddress,
-    chainId: baseSepolia.id
+  const account = useActiveAccount();
+  const {data, isError, isLoading} = useWalletBalance({
+    address: account?.address,
+    client,
+    chain
   });
 
   if (isLoading) return <div>Fetching balance…</div>;
@@ -20,7 +20,7 @@ const Balance = () => {
       {isError && <p>Error fetching balance.</p>}
       {data && (
         <p>
-          Balance: {data?.formatted} {data?.symbol}
+          Balance: {data?.displayValue} {data?.symbol}
         </p>
       )}
     </>

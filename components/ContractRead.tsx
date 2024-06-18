@@ -1,40 +1,18 @@
 'use client';
 
 import Wrapper from 'components/Wrapper';
-import {GREETER_ABI} from 'lib/utils';
-import { useAccount, useReadContract} from 'wagmi';
-
 import MonoLabel from './MonoLabel';
-import { contractAddress } from './providers';
+import { contract } from './providers';
+import { useReadContract } from 'thirdweb/react';
 
 
 
 const ContractRead = () => {
-  const {chain} = useAccount();
-
-  // Doesnt auto reload because biconomy 'sendSponsoredTransaction' does not invalidate this query :(
+  // auto reloads on contract state change
   const {data, isError, isLoading} = useReadContract({
-    address: contractAddress,
-    abi: GREETER_ABI,
-    functionName: 'greeting',
-    args: [],
+    contract,
+    method: 'function greeting() returns (string)',
   });
-
-  if (!chain) {
-    return (
-      <Wrapper title="Contract Read">
-        <p>Loading...</p>
-      </Wrapper>
-    );
-  }
-
-  if (!contractAddress) {
-    return (
-      <Wrapper title="Contract Read">
-        <p>Unsupported network. Please switch to Goerli or Mainnet.</p>
-      </Wrapper>
-    );
-  }
 
   if (isError) {
     return (
