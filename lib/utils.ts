@@ -1,28 +1,60 @@
-import type {
-  TransactionReceipt,
-  TransactionLegacy,
-  TransactionEIP1559,
-  TransactionEIP2930,
-} from 'viem';
-import type { GetTransactionData } from 'wagmi/query';
-
 export const shorten = (address: string | undefined) => {
   if (!address) return '';
   return `${address.substring(0, 6)}...${address.substring(address.length - 4, address.length)}`;
 };
 
-export type AddressString = `0x${string}`;
-
-export const stringifyTransaction = (
-  tx?: GetTransactionData<any, any> | TransactionReceipt | TransactionLegacy | TransactionEIP1559 | TransactionEIP2930,
-) => {
-  if (!tx) return '{}';
-
-  return JSON.stringify(
-    Object.fromEntries(
-      Object.entries(tx).map(([key, val]) => [key, typeof val === 'bigint' ? val.toString() : val]),
-    ),
-    null,
-    2,
-  );
-};
+export const GREETER_ABI = [
+  {
+    type: 'constructor',
+    name: '',
+    inputs: [],
+    outputs: [],
+    stateMutability: 'nonpayable',
+  },
+  {
+    type: 'event',
+    name: 'GreetingChange',
+    inputs: [
+      {
+        type: 'address',
+        name: 'greetingSetter',
+        indexed: true,
+        internalType: 'address',
+      },
+      {
+        type: 'string',
+        name: 'newGreeting',
+        indexed: false,
+        internalType: 'string',
+      },
+    ],
+    outputs: [],
+    anonymous: false,
+  },
+  {
+    type: 'function',
+    name: 'greeting',
+    inputs: [],
+    outputs: [
+      {
+        type: 'string',
+        name: '',
+        internalType: 'string',
+      },
+    ],
+    stateMutability: 'view',
+  },
+  {
+    type: 'function',
+    name: 'setGreeting',
+    inputs: [
+      {
+        type: 'string',
+        name: '_newGreeting',
+        internalType: 'string',
+      },
+    ],
+    outputs: [],
+    stateMutability: 'payable',
+  },
+] as const;

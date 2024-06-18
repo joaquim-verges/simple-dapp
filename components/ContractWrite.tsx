@@ -1,159 +1,101 @@
 'use client';
 
 import Wrapper from 'components/Wrapper';
-import {shorten, type AddressString} from 'lib/utils';
-import {useAccount, useSimulateContract, useWriteContract} from 'wagmi';
+import {GREETER_ABI, shorten} from 'lib/utils';
+import {useAccount, useSwitchChain} from 'wagmi';
 
 import Button from './Button';
 import MonoLabel from './MonoLabel';
+import { baseSepolia } from 'viem/chains';
+import { useSendSponsoredTransaction, useUserOpWait } from '@biconomy/use-aa';
+import { encodeFunctionData } from 'viem';
+import { PaymasterMode } from '@biconomy/account';
+import { contractAddress } from './providers';
 
-const wagmigotchiABI = [
-  {inputs: [], stateMutability: 'nonpayable', type: 'constructor'},
-  {
-    anonymous: false,
-    inputs: [
-      {
-        indexed: true,
-        internalType: 'address',
-        name: 'caretaker',
-        type: 'address',
-      },
-      {
-        indexed: true,
-        internalType: 'uint256',
-        name: 'amount',
-        type: 'uint256',
-      },
-    ],
-    name: 'CaretakerLoved',
-    type: 'event',
-  },
-  {
-    inputs: [],
-    name: 'clean',
-    outputs: [],
-    stateMutability: 'nonpayable',
-    type: 'function',
-  },
-  {
-    inputs: [],
-    name: 'feed',
-    outputs: [],
-    stateMutability: 'nonpayable',
-    type: 'function',
-  },
-  {
-    inputs: [],
-    name: 'getAlive',
-    outputs: [{internalType: 'bool', name: '', type: 'bool'}],
-    stateMutability: 'view',
-    type: 'function',
-  },
-  {
-    inputs: [],
-    name: 'getBoredom',
-    outputs: [{internalType: 'uint256', name: '', type: 'uint256'}],
-    stateMutability: 'view',
-    type: 'function',
-  },
-  {
-    inputs: [],
-    name: 'getHunger',
-    outputs: [{internalType: 'uint256', name: '', type: 'uint256'}],
-    stateMutability: 'view',
-    type: 'function',
-  },
-  {
-    inputs: [],
-    name: 'getSleepiness',
-    outputs: [{internalType: 'uint256', name: '', type: 'uint256'}],
-    stateMutability: 'view',
-    type: 'function',
-  },
-  {
-    inputs: [],
-    name: 'getStatus',
-    outputs: [{internalType: 'string', name: '', type: 'string'}],
-    stateMutability: 'view',
-    type: 'function',
-  },
-  {
-    inputs: [],
-    name: 'getUncleanliness',
-    outputs: [{internalType: 'uint256', name: '', type: 'uint256'}],
-    stateMutability: 'view',
-    type: 'function',
-  },
-  {
-    inputs: [{internalType: 'address', name: '', type: 'address'}],
-    name: 'love',
-    outputs: [{internalType: 'uint256', name: '', type: 'uint256'}],
-    stateMutability: 'view',
-    type: 'function',
-  },
-  {
-    inputs: [],
-    name: 'play',
-    outputs: [],
-    stateMutability: 'nonpayable',
-    type: 'function',
-  },
-  {
-    inputs: [],
-    name: 'sleep',
-    outputs: [],
-    stateMutability: 'nonpayable',
-    type: 'function',
-  },
+const GREETINGS = [
+  "Hello!",
+  "Hola!",
+  "Bonjour!",
+  "Ciao!",
+  "Hallo!",
+  "Hej!",
+  "Namaste!",
+  "Konnichiwa!",
+  "Annyeonghaseyo!",
+  "Olá!",
+  "Zdravstvuyte!",
+  "Nǐ hǎo!",
+  "Shikamoo!",
 ];
+
+function pickRandomGreeting() {
+  return GREETINGS[Math.floor(Math.random() * GREETINGS.length)];
+}
 
 const ContractWrite = () => {
   const {chain} = useAccount();
+  const {switchChain} = useSwitchChain();
 
-  const contractAddress: AddressString | undefined = '0xeCB504D39723b0be0e3a9Aa33D646642D1051EE1'; // WAGMIGOTCHI on Mainnet and Goerli
+  const {
+    mutate: sendTransaction,
+    data: userOpResponse,
+    error,
+    isPending,
+  } = useSendSponsoredTransaction();
 
-  const {data: simulatedContract} = useSimulateContract({
-    address: contractAddress,
-    abi: wagmigotchiABI,
-    functionName: 'feed',
-  });
+  const {
+    isLoading: waitIsLoading,
+    isSuccess: waitIsSuccess,
+    error: waitError,
+    data,
+  } = useUserOpWait(userOpResponse);
 
-  const {data, isPending, isError, writeContract} = useWriteContract();
+  const setGreeting = () =>
+    // can't use regular WAGMI hooks to send AA transactions :(
+    sendTransaction({
+      transactions: {
+        to: contractAddress,
+        data: encodeFunctionData({
+          abi: GREETER_ABI,
+          functionName: "setGreeting",
+          args: [pickRandomGreeting()],
+        }),
+      },
+      options: {
+        // had to add this to sponsor tx, but wasn't in the docs?
+        paymasterServiceData: {mode: PaymasterMode.SPONSORED},
+      }
+    });
 
   if (!chain) {
     return (
-      <Wrapper title="useContractWrite">
-        <p>Loading...</p>
+      <Wrapper title="Sponsored transaction">
+        <Button onClick_={() => switchChain({ chainId: baseSepolia.id })} cta="Switch to Base Sepolia" />
       </Wrapper>
     );
   }
 
   if (!contractAddress) {
     return (
-      <Wrapper title="useContractWrite">
-        <p>Unsupported network. Please switch to Goerli or Mainnet.</p>
+      <Wrapper title="Sponsored transaction">
+        <p>Unsupported network. Please switch to Base Sepolia.</p>
       </Wrapper>
     );
   }
 
   return (
-    <Wrapper title="useContractWrite">
-      <div className="rounded bg-red-400 px-2 py-1 text-sm text-white">
-        We recommend doing this on goerli.
-      </div>
-      {data && !isError && (
+    <Wrapper title="Sponsored transaction">
+      {data && waitIsSuccess && (
         <p>
-          Transaction hash: <MonoLabel label={shorten(data)} />
+          Transaction hash: <MonoLabel label={shorten(data.receipt?.transactionHash)} />
         </p>
       )}
-      {isError && <p>Error sending transaction.</p>}
-      {simulatedContract && (
+      {error || waitError && <p>Error sending transaction. {error?.message || waitError?.message}</p>}
         <Button
-          disabled={isPending}
-          onClick_={() => writeContract?.(simulatedContract.request)}
-          cta="Feed Wagmigotchi"
+          disabled={isPending || waitIsLoading}
+          onClick_={() => setGreeting()}
+          cta="Set Greeting"
         />
-      )}
     </Wrapper>
   );
 };

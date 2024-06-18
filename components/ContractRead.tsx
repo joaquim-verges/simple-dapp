@@ -1,34 +1,28 @@
 'use client';
 
 import Wrapper from 'components/Wrapper';
-import {shorten, type AddressString} from 'lib/utils';
-import {erc721Abi} from 'viem';
-import {useContractRead, useAccount} from 'wagmi';
+import {GREETER_ABI} from 'lib/utils';
+import { useAccount, useReadContract} from 'wagmi';
 
 import MonoLabel from './MonoLabel';
+import { contractAddress } from './providers';
+
+
 
 const ContractRead = () => {
   const {chain} = useAccount();
 
-  let contractAddress: AddressString | undefined;
-  switch (chain?.id) {
-    case 1:
-    case 5:
-      contractAddress = '0x57f1887a8bf19b14fc0df6fd9b2acc9af147ea85'; // ENS Mainnet and Goerli Base Registrar
-      break;
-  }
-
-  const tokenId = '51642261290124123987113999051891697215550265269061454558443363901899214720732'; // larry.eth
-  const {data, isError, isLoading} = useContractRead({
+  // Doesnt auto reload because biconomy 'sendSponsoredTransaction' does not invalidate this query :(
+  const {data, isError, isLoading} = useReadContract({
     address: contractAddress,
-    abi: erc721Abi,
-    functionName: 'ownerOf',
-    args: [BigInt(tokenId)],
+    abi: GREETER_ABI,
+    functionName: 'greeting',
+    args: [],
   });
 
   if (!chain) {
     return (
-      <Wrapper title="useContractRead">
+      <Wrapper title="Contract Read">
         <p>Loading...</p>
       </Wrapper>
     );
@@ -36,7 +30,7 @@ const ContractRead = () => {
 
   if (!contractAddress) {
     return (
-      <Wrapper title="useContractReads">
+      <Wrapper title="Contract Read">
         <p>Unsupported network. Please switch to Goerli or Mainnet.</p>
       </Wrapper>
     );
@@ -44,30 +38,32 @@ const ContractRead = () => {
 
   if (isError) {
     return (
-      <Wrapper title="useContractRead">
+      <Wrapper title="Contract Read">
         <p>Error reading from contract.</p>
       </Wrapper>
     );
-  } else if (isLoading) {
+  }
+  
+  if (isLoading) {
     return (
-      <Wrapper title="useContractRead">
+      <Wrapper title="Contract Read">
         <p>Loading...</p>
       </Wrapper>
     );
-  } else {
-    return (
-      <Wrapper title="useContractRead">
+  }
+    
+  return (
+      <Wrapper title="Contract Read">
         <p>
-          Owner of ENS Token ID {shorten(tokenId)}:{' '}
+          Current greeting is:{' '}
           {!data ? (
-            <MonoLabel label="Error. Token may not exist on this network." />
+            <MonoLabel label="Error." />
           ) : (
-            <MonoLabel label={shorten(data)} />
+            <MonoLabel label={data} />
           )}
         </p>
       </Wrapper>
     );
-  }
 };
 
 export default ContractRead;
